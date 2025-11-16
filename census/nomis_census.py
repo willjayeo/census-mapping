@@ -4,6 +4,7 @@ Tools for handling census data acessed from NOMIS
 Author: William Jay, November 2025
 """
 
+import geopandas as gpd
 import pandas as pd
 
 from glob import glob
@@ -29,6 +30,10 @@ class Census(object):
 
         # Read CSV files as one pandas DataFrame
         self.data = self.nomis_csv_to_dataframe(csv_list)
+
+        # Define column names of output area IDs
+        self.oa_id_col_nomis = "2021 output area"
+        self.oa_id_col_polygons = "OA21CD"
 
     def nomis_csv_to_dataframe(
         self,
@@ -94,9 +99,28 @@ class Census(object):
 
         return main_df
 
-    def map_data_to_polygons(geopackage: str):
+    def map_data_to_polygons(
+        self,
+        gpkg_path: str,
+    ):
         """
         Returns a geopandas DataFrame that contains geospatial polygons for each
         geographic entry such as output areas or super output areas.
         """
-        pass
+
+        # Open output areas as GeoDataFrame
+        gdf = gpd.read_file(gpkg_path)
+
+        # Join the census data to the output area polygons
+        mapped_df = gdf.merge(
+            self.data,
+            left_on=self.oa_id_col_polygons,
+            right_on=self.oa_id_col_nomis,
+            how="left",
+        )
+
+        # Open the joined data as a GeoDataFrame
+        mapped_gdf = gpd.GeoDataFrame(mapped_df)
+
+        # Assign to attribute
+        self.mapped_data = mapped_gdf
