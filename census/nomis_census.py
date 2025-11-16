@@ -13,13 +13,11 @@ from glob import glob
 class Census(object):
     """ """
 
-    def __init__(self, csv_glob: str):
+    def __init__(self, csv_glob: str, gpkg_path: str):
         """
         Initiate class with a Unix-style glob to all NOMIS CSV files containing census
         data
         """
-
-        print("Initialising census object")
 
         csv_list = glob(csv_glob)
 
@@ -31,9 +29,15 @@ class Census(object):
         # Read CSV files as one pandas DataFrame
         self.data = self.nomis_csv_to_dataframe(csv_list)
 
+        # Open output areas as GeoDataFrame
+        self.output_areas = gpd.read_file(gpkg_path)
+
         # Define column names of output area IDs
         self.oa_id_col_nomis = "2021 output area"
         self.oa_id_col_polygons = "OA21CD"
+
+        # Make GeoDataFrame of census data and their output areas
+        self.map_data_to_polygons()
 
     def nomis_csv_to_dataframe(
         self,
@@ -51,8 +55,6 @@ class Census(object):
         df_list = []
 
         for csv_path in csv_list:
-
-            print(f"Reading CSV: '{csv_path}'")
 
             with open(csv_path, "r") as csv_file:
 
@@ -84,35 +86,26 @@ class Census(object):
             # The first dataframe in the list will be the main dataframe. Other
             # dataframes will be added to the main dataframe
             if n == 0:
-                print(f"Designating main dataframe: '{df.name}'")
                 main_df = df
 
             # For the second dataframe, add a suffix for the main dataframe's fields so
             # the dataset they are from is identifiable
             elif n == 1:
-                print(f"Joining {df.name}")
-                main_df.join(df, lsuffix=main_df.name, rsuffix=df.name)
+                main_df = main_df.join(df, lsuffix=main_df.name, rsuffix=df.name)
 
             else:
-                print(f"Joining {df.name}")
-                main_df.join(df, rsuffix=df.name)
+                main_df = main_df.join(df, rsuffix=df.name)
 
         return main_df
 
-    def map_data_to_polygons(
-        self,
-        gpkg_path: str,
-    ):
+    def map_data_to_polygons(self):
         """
         Returns a geopandas DataFrame that contains geospatial polygons for each
         geographic entry such as output areas or super output areas.
         """
 
-        # Open output areas as GeoDataFrame
-        gdf = gpd.read_file(gpkg_path)
-
         # Join the census data to the output area polygons
-        mapped_df = gdf.merge(
+        mapped_df = self.output_areas.merge(
             self.data,
             left_on=self.oa_id_col_polygons,
             right_on=self.oa_id_col_nomis,
