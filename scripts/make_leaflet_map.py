@@ -10,8 +10,7 @@ import folium
 
 import geopandas as gpd
 
-# TODO: Make this a proper package
-from nomis_census import Census
+from census.nomis_census import Census
 
 CSV_GEOMETRY = "2021 output area"
 GPKG_GEOMETRY = "OA21CD"
