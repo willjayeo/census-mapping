@@ -63,7 +63,7 @@ def main(
 
 
 def create_choropleth_map(
-    geodataframe: gpd.GeoDataFrame,
+    gdf: gpd.GeoDataFrame,
     value_field: str,
     geometry_field: str,
     output_map: str,
@@ -78,11 +78,13 @@ def create_choropleth_map(
     folium_map = folium.Map(start_coords, zoom_start=zoom_level)
 
     # Create choropleth features
-    folium.Choropleth(
-        geo_data=geodataframe,
-        data=geodataframe,
+    choropleth = folium.Choropleth(
+        geo_data=gdf,
+        data=gdf,
         columns=[geometry_field, value_field],
         key_on=f"feature.properties.{geometry_field}",
+        legend_name=value_field,
+        highlight=True,
     ).add_to(folium_map)
 
     # Write as HTML
