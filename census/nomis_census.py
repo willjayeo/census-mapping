@@ -11,9 +11,17 @@ from glob import glob
 
 
 class Census(object):
-    """ """
+    """
+    Class object for handling census data from CSV files acessed from NOMIS
+    """
 
-    def __init__(self, csv_glob: str, gpkg_path: str):
+    def __init__(
+        self,
+        csv_glob: str,
+        gpkg_path: str,
+        geometry_field_nomis: str = "2021 output area",
+        geometry_field_gpkg: str = "OA21CD",
+    ):
         """
         Initiate class with a Unix-style glob to all NOMIS CSV files containing census
         data
@@ -33,8 +41,8 @@ class Census(object):
         self.output_areas = gpd.read_file(gpkg_path)
 
         # Define column names of output area IDs
-        self.oa_id_col_nomis = "2021 output area"
-        self.oa_id_col_polygons = "OA21CD"
+        self.geometry_field_nomis = geometry_field_nomis
+        self.geometry_field_gpkg = geometry_field_gpkg
 
         # Make GeoDataFrame of census data and their output areas
         self.map_data_to_polygons()
@@ -107,8 +115,8 @@ class Census(object):
         # Join the census data to the output area polygons
         mapped_df = self.output_areas.merge(
             self.data,
-            left_on=self.oa_id_col_polygons,
-            right_on=self.oa_id_col_nomis,
+            left_on=self.geometry_field_gpkg,
+            right_on=self.geometry_field_nomis,
             how="left",
         )
 
