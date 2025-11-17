@@ -10,8 +10,7 @@ import folium
 
 import geopandas as gpd
 
-# TODO: Make this a proper package
-from nomis_census import Census
+from census.nomis_census import Census
 
 
 def main(csv_glob: str, gpkg_path: str, output_map: str):
