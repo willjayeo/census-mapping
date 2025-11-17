@@ -1,4 +1,4 @@
-# `make_leaflet_map.py
+# `make_leaflet_map.py`
 
 Create a choropleth [Leaflet](https://leafletjs.com/) map from a graduated census data field.
 
@@ -29,7 +29,7 @@ options:
 ~/code/census-mapping/scripts/make_leaflet_map.py --input_csv data/census_plymouth/ts004_country-of-birth_plymouth.csv --input_gpkg data/census_plymouth/Output_Areas_2021_plymouth.gpkg --output_map /tmp/born_in_europe_percent_map.html --variable 'Europe' --percent_variable 'Total: All usual residents'
 ```
 
-[Output Map](./maps/born_in_europe_percent_map.html)
+[Output Map]( http://htmlpreview.github.io/?https://github.com/willjayeo/census-mapping/blob/20251117_willjayeo_install-package/docs/maps/born_in_europe_percent_map.html)
 
 2) Percent of people identifying with no religion
 
