@@ -132,7 +132,7 @@ class Census(object):
 
         # Remove output areas that are not required
         if output_areas_to_keep is not None:
-            self.remove_polygons_from_gpkg(polygons_to_keep)
+            self.remove_polygons_from_gpkg(output_areas_to_keep)
         
         # Join the census data to the output area polygons
         gdf = gdf.merge(
