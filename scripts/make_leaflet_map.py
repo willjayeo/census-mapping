@@ -40,23 +40,21 @@ def main(
     """
 
     # Get Census object
-    census = Census(csv_path, gpkg_path, csv_geometry_field, gpkg_geometry_field)
+    census = Census(csv_path)
 
-    # Calculate percent from sum values if percent is required
-    variable_percent_name = f"{variable}_percent"
+    # Map data onto output area polygons
+    census.map_data_to_polygons(gpkg_path, csv_geometry_field, gpkg_geometry_field)
+
+    # Calculate percent of variable
     if percent_of_variable is not None:
-        census.mapped_data[variable_percent_name] = (
-            census.mapped_data[variable] / census.mapped_data[percent_of_variable]
-        ) * 100
-
-        # Replace variable name with new variable percent
-        variable = variable_percent_name
+        
+       variable = census.calc_percent_of_variable(variable, percent_of_variable)
 
     # Create choropleth Leaflet map
     create_choropleth_map(
         census.mapped_data,
         variable,
-        census.geometry_field_gpkg,
+        gpkg_geometry_field,
         output_map,
     )
 
