@@ -18,9 +18,8 @@ def main(
     csv_path: str,
     gpkg_path: str,
     output_plot: str,
-    #variable: str,
-    #percent_of_variable: str = None,
-    output_areas_to_keep: list[str] = AUTHORITY_OF_INTEREST,
+    authorities_to_keep: list[str] = AUTHORITY_OF_INTEREST,
+    authority_field: str = AUTHORITY_FIELD,
     csv_geometry_field: str = CSV_GEOMETRY,
     gpkg_geometry_field: str = GPKG_GEOMETRY,
 ):
@@ -34,13 +33,54 @@ def main(
 
     # Map data onto output area polygons
     census.map_data_to_polygons(
-        gpkg_path, csv_geometry_field, gpkg_geometry_field, output_areas_to_keep
+        gpkg_path, csv_geometry_field, gpkg_geometry_field, authorities_to_keep
     )
 
-    # Calculate percent of variable
-    #if percent_of_variable is not None:
-    #    
-    #`   variable = census.calc_percent_of_variable(variable, percent_of_variable)
+    # This dataset has MSOAs named with the prefix of 'msoa2021:' which needs removing
+    # in order to match the MSOA names in the GeoPackage. The following line removes
+    # characters to the left of and including ':'
+    census.data[csv_geometry_field] = (
+        census.data[csv_geometry_field].str.split(":").str.get(1)
+    )
+
+    print(census.data["Area"])
+
+    # Remove unrequired authorities
+    census.mapped_data = remove_polygons_by_authority(
+        census.mapped_data, authorities_to_keep, authority_field
+    )
+
+    print(census.mapped_data["UK identity: Cornish only identity"].describe())
+
+    fields_of_interest = [
+        "UK identity: British only identity",
+        "UK identity: English only identity",
+        "UK identity: English and British only identity",
+        "UK identity: Cornish only identity",
+        "UK identity: Cornish and British only identity",
+    ]
+    total_field = "Total: All usual residents"
+    # List to populate new field names with
+    percent_fields = []
+
+    for field in fields_of_interest:
+
+        # Calculate field as a percentage of the total per output area
+        new_field_name = census.calc_percent_of_variable(field, total_field)
+        # Add new field name to list
+        percent_fields.append(new_field_name)
+
+
+# TODO: Make this flexible and handle queries for multiple regions and add to Census class
+def remove_polygons_by_authority(
+    gdf, authorities_to_keep: list[str], authority_field: str
+):
+    """
+    Remove polygons from self.output_areas GeoDataFrame by inputting a list of aurthority names to keep.
+    """
+
+    return gdf[gdf["MSOA21NM"].str.startswith("Cornwall")]
+
 
 if __name__ == "__main__":
     helpstring = ""

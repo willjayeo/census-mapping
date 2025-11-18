@@ -133,7 +133,17 @@ class Census(object):
         # Remove output areas that are not required
         if output_areas_to_keep is not None:
             self.remove_polygons_from_gpkg(output_areas_to_keep)
-        
+
+        # Check that the datatypes of the join columns match
+        nomis_dtype = self.data[geometry_field_nomis].dtype
+        gpkg_dtype = gdf[geometry_field_gpkg].dtype
+        if nomis_dtype != gpkg_dtype:
+            raise ValueError(
+                "Datatype mismatch for join columns. NOMIS field "
+                f"'{geometry_field_nomis}' is '{nomis_dtype}' and GeoPackage field "
+                f"'{geometry_field_gpkg}' is '{gpkg_dtype}'"
+            )
+
         # Join the census data to the output area polygons
         gdf = gdf.merge(
             self.data,
