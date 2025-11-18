@@ -29,7 +29,7 @@ options:
 ~/code/census-mapping/scripts/make_leaflet_map.py --input_csv data/census_plymouth/ts004_country-of-birth_plymouth.csv --input_gpkg data/census_plymouth/Output_Areas_2021_plymouth.gpkg --output_map /tmp/born_in_europe_percent_map.html --variable 'Europe' --percent_variable 'Total: All usual residents'
 ```
 
-[Output Map HTML](./docs/maps/born_in_europe_percent_map.html)
+[Output Map HTML](./maps/born_in_europe_percent_map.html)
 
 2) Percent of people identifying with no religion
 
