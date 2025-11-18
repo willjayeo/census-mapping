@@ -15,16 +15,11 @@ class Census(object):
     Class object for handling census data from CSV files acessed from NOMIS
     """
 
-    def __init__(
-        self,
-        csv_glob: str,
-        gpkg_path: str,
-        geometry_field_nomis: str = "2021 output area",
-        geometry_field_gpkg: str = "OA21CD",
-    ):
+    def __init__(self, csv_glob: str):
         """
         Initiate class with a Unix-style glob to all NOMIS CSV files containing census
-        data
+        data.
+
         """
 
         csv_list = glob(csv_glob)
@@ -36,16 +31,6 @@ class Census(object):
 
         # Read CSV files as one pandas DataFrame
         self.data = self.nomis_csv_to_dataframe(csv_list)
-
-        # Open output areas as GeoDataFrame
-        self.output_areas = gpd.read_file(gpkg_path)
-
-        # Define column names of output area IDs
-        self.geometry_field_nomis = geometry_field_nomis
-        self.geometry_field_gpkg = geometry_field_gpkg
-
-        # Make GeoDataFrame of census data and their output areas
-        self.map_data_to_polygons()
 
     def nomis_csv_to_dataframe(
         self,
@@ -106,22 +91,66 @@ class Census(object):
 
         return main_df
 
-    def map_data_to_polygons(self):
+    def calc_percent_of_variable(self, variable_name: str, total_name: str):
         """
-        Returns a geopandas DataFrame that contains geospatial polygons for each
-        geographic entry such as output areas or super output areas.
+        Create new series within the self.mapped_data GeoDataFrame containing the
+        percentage of a given variable of another.
+
+        Returns name of new variable
         """
 
+        # Create standard name for new series
+        variable_percent_name = f"{variable_name}_percent"
+
+        # Calculate percent from sum values if percent is required
+        self.mapped_data[variable_percent_name] = (
+            self.mapped_data[variable_name] / self.mapped_data[total_name]
+        ) * 100
+
+        return variable_percent_name
+
+    def map_data_to_polygons(
+        self,
+        gpkg_path: str,
+        geometry_field_nomis: str = "2021 output area",
+        geometry_field_gpkg: str = "OA21CD",
+        output_areas_to_keep: list[str] = None,
+    ):
+        """
+        Returns a geopandas DataFrame that contains geospatial polygons for each
+        geographic entry such as output areas or super output areas. A GeoPackage file
+        must be input containing these output areas at the resolution that matches the
+        census data.
+
+        If output_areas_to_keep is None (the default value), then all output areas are
+        kept. Otherwise all others are removed. Use this if you are only interested in a
+        specific region.
+        """
+
+        # Open output areas as GeoDataFrame
+        gdf = gpd.read_file(gpkg_path)
+
+        # Remove output areas that are not required
+        if output_areas_to_keep is not None:
+            self.remove_polygons_from_gpkg(polygons_to_keep)
+        
         # Join the census data to the output area polygons
-        mapped_df = self.output_areas.merge(
+        gdf = gdf.merge(
             self.data,
-            left_on=self.geometry_field_gpkg,
-            right_on=self.geometry_field_nomis,
+            left_on=geometry_field_gpkg,
+            right_on=geometry_field_nomis,
             how="left",
         )
 
         # Open the joined data as a GeoDataFrame
-        mapped_gdf = gpd.GeoDataFrame(mapped_df)
+        mapped_gdf = gpd.GeoDataFrame(gdf)
 
         # Assign to attribute
         self.mapped_data = mapped_gdf
+
+    def remove_polygons_from_gpkg(self, polygons_to_keep: list[str]):
+        """
+        Remove polygons from self.output_areas GeoDataFrame
+        """
+
+        pass
