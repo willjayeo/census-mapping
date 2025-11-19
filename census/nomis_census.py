@@ -4,6 +4,8 @@ Tools for handling census data acessed from NOMIS
 Author: William Jay, November 2025
 """
 
+import folium
+
 import geopandas as gpd
 import pandas as pd
 
@@ -114,30 +116,34 @@ class Census(object):
         gpkg_path: str,
         geometry_field_nomis: str = "2021 output area",
         geometry_field_gpkg: str = "OA21CD",
-        output_areas_to_keep: list[str] = None,
     ):
         """
         Returns a geopandas DataFrame that contains geospatial polygons for each
         geographic entry such as output areas or super output areas. A GeoPackage file
         must be input containing these output areas at the resolution that matches the
         census data.
-
-        If output_areas_to_keep is None (the default value), then all output areas are
-        kept. Otherwise all others are removed. Use this if you are only interested in a
-        specific region.
         """
 
         # Open output areas as GeoDataFrame
         gdf = gpd.read_file(gpkg_path)
 
-        # Remove output areas that are not required
-        if output_areas_to_keep is not None:
-            self.remove_polygons_from_gpkg(polygons_to_keep)
-        
+        # Add geometry fields ass attributes
+        self.geometry_field_gpkg = geometry_field_gpkg
+
+        # Check that the datatypes of the join columns match
+        nomis_dtype = self.data[geometry_field_nomis].dtype
+        gpkg_dtype = gdf[self.geometry_field_gpkg].dtype
+        if nomis_dtype != gpkg_dtype:
+            raise ValueError(
+                "Datatype mismatch for join columns. NOMIS field "
+                f"'{geometry_field_nomis}' is '{nomis_dtype}' and GeoPackage field "
+                f"'{self.geometry_field_gpkg}' is '{gpkg_dtype}'"
+            )
+
         # Join the census data to the output area polygons
         gdf = gdf.merge(
             self.data,
-            left_on=geometry_field_gpkg,
+            left_on=self.geometry_field_gpkg,
             right_on=geometry_field_nomis,
             how="left",
         )
@@ -148,9 +154,29 @@ class Census(object):
         # Assign to attribute
         self.mapped_data = mapped_gdf
 
-    def remove_polygons_from_gpkg(self, polygons_to_keep: list[str]):
+    def create_choropleth_map(
+        self,
+        value_field: str,
+        output_map: str,
+        start_coords: list[float],
+        zoom_level: int,
+    ):
         """
-        Remove polygons from self.output_areas GeoDataFrame
+        Create a Leaflet choropleth map using the folium.Choropleth method
         """
 
-        pass
+        # Create map centered over Plymouth
+        folium_map = folium.Map(start_coords, zoom_start=zoom_level)
+
+        # Create choropleth features
+        choropleth = folium.Choropleth(
+            geo_data=self.mapped_data,
+            data=self.mapped_data,
+            columns=[self.geometry_field_gpkg, value_field],
+            key_on=f"feature.properties.{self.geometry_field_gpkg}",
+            legend_name=value_field,
+            highlight=True,
+        ).add_to(folium_map)
+
+        # Write as HTML
+        folium_map.save(output_map)
