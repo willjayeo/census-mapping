@@ -39,14 +39,12 @@ def main(
     )
 
     # Map data onto output area polygons
-    census.map_data_to_polygons(
-        gpkg_path, csv_geometry_field, gpkg_geometry_field, authorities_to_keep
-    )
+    census.map_data_to_polygons(gpkg_path, csv_geometry_field, gpkg_geometry_field)
 
-    # Remove unrequired authorities
-    census.mapped_data = remove_polygons_by_authority(
-        census.mapped_data, authorities_to_keep, authority_field
-    )
+    # Remove MSOAs that are not Cornwall
+    census.mapped_data = census.mapped_data[
+        census.mapped_data["MSOA21NM"].str.startswith("Cornwall")
+    ]
 
     fields_of_interest = [
         "UK identity: British only identity",
@@ -66,16 +64,13 @@ def main(
         # Add new field name to list
         percent_fields.append(new_field_name)
 
-
-# TODO: Make this flexible and handle queries for multiple regions and add to Census class
-def remove_polygons_by_authority(
-    gdf, authorities_to_keep: list[str], authority_field: str
-):
-    """
-    Remove polygons from self.output_areas GeoDataFrame by inputting a list of aurthority names to keep.
-    """
-
-    return gdf[gdf["MSOA21NM"].str.startswith("Cornwall")]
+    # Create simple choropleth leaflet map
+    census.create_choropleth_map(
+        "UK identity: Cornish only identity_percent",
+        output_plot,
+        [50.406, -4.848],
+        9,
+    )
 
 
 if __name__ == "__main__":

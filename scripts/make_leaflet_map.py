@@ -6,7 +6,6 @@ Author: William Jay, November 2025
 """
 
 import argparse
-import folium
 
 import geopandas as gpd
 
@@ -26,6 +25,8 @@ def main(
     percent_of_variable: str = None,
     csv_geometry_field: str = CSV_GEOMETRY,
     gpkg_geometry_field: str = GPKG_GEOMETRY,
+    start_coords: list[float] = PLYMOUTH_COORDS,
+    start_coords: int = ZOOM_LEVEL,
 ):
     """
     Create a Leaflet HTML choropleth map using Folium for a chosen variable in a
@@ -47,45 +48,14 @@ def main(
 
     # Calculate percent of variable
     if percent_of_variable is not None:
-        
-       variable = census.calc_percent_of_variable(variable, percent_of_variable)
+
+        variable = census.calc_percent_of_variable(variable, percent_of_variable)
 
     # Create choropleth Leaflet map
     create_choropleth_map(
-        census.mapped_data,
         variable,
-        gpkg_geometry_field,
         output_map,
     )
-
-
-def create_choropleth_map(
-    gdf: gpd.GeoDataFrame,
-    value_field: str,
-    geometry_field: str,
-    output_map: str,
-    start_coords: list[float] = PLYMOUTH_COORDS,
-    zoom_level: int = ZOOM_LEVEL,
-):
-    """
-    Create a Leaflet choropleth map using the folium.Choropleth method
-    """
-
-    # Create map centered over Plymouth
-    folium_map = folium.Map(start_coords, zoom_start=zoom_level)
-
-    # Create choropleth features
-    choropleth = folium.Choropleth(
-        geo_data=gdf,
-        data=gdf,
-        columns=[geometry_field, value_field],
-        key_on=f"feature.properties.{geometry_field}",
-        legend_name=value_field,
-        highlight=True,
-    ).add_to(folium_map)
-
-    # Write as HTML
-    folium_map.save(output_map)
 
 
 if __name__ == "__main__":
