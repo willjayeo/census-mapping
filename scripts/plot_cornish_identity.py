@@ -11,7 +11,7 @@ from census.nomis_census import Census
 AUTHORITY_OF_INTEREST = "Cornwall"
 AUTHORITY_FIELD = "MSOA21NM"
 CSV_GEOMETRY = "Area"
-GPKG_GEOMETRY = "MSOA21CD"
+GPKG_GEOMETRY = "MSOA21NM"
 
 
 def main(
@@ -31,11 +31,6 @@ def main(
     # Get Census object
     census = Census(csv_path)
 
-    # Map data onto output area polygons
-    census.map_data_to_polygons(
-        gpkg_path, csv_geometry_field, gpkg_geometry_field, authorities_to_keep
-    )
-
     # This dataset has MSOAs named with the prefix of 'msoa2021:' which needs removing
     # in order to match the MSOA names in the GeoPackage. The following line removes
     # characters to the left of and including ':'
@@ -43,14 +38,15 @@ def main(
         census.data[csv_geometry_field].str.split(":").str.get(1)
     )
 
-    print(census.data["Area"])
+    # Map data onto output area polygons
+    census.map_data_to_polygons(
+        gpkg_path, csv_geometry_field, gpkg_geometry_field, authorities_to_keep
+    )
 
     # Remove unrequired authorities
     census.mapped_data = remove_polygons_by_authority(
         census.mapped_data, authorities_to_keep, authority_field
     )
-
-    print(census.mapped_data["UK identity: Cornish only identity"].describe())
 
     fields_of_interest = [
         "UK identity: British only identity",
