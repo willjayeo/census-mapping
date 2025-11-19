@@ -26,7 +26,7 @@ def main(
     csv_geometry_field: str = CSV_GEOMETRY,
     gpkg_geometry_field: str = GPKG_GEOMETRY,
     start_coords: list[float] = PLYMOUTH_COORDS,
-    start_coords: int = ZOOM_LEVEL,
+    zoom_level: int = ZOOM_LEVEL,
 ):
     """
     Create a Leaflet HTML choropleth map using Folium for a chosen variable in a
@@ -52,10 +52,7 @@ def main(
         variable = census.calc_percent_of_variable(variable, percent_of_variable)
 
     # Create choropleth Leaflet map
-    create_choropleth_map(
-        variable,
-        output_map,
-    )
+    census.create_choropleth_map(variable, output_map, start_coords, zoom_level)
 
 
 if __name__ == "__main__":
